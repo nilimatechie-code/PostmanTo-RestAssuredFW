@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postman → REST Assured Framework Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #131a24;
+    --panel-2: #0f151e;
+    --border: #223047;
+    --text: #dbe4ee;
+    --text-dim: #7d8fa6;
+    --accent: #ff6b35;
+    --accent-dim: #b34f27;
+    --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --java-green: #4a9c6d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .brand-mark {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    border: 1px solid var(--accent-dim);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+  .stack-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .stack-tag b { color: var(--java-green); font-weight: 600; }
+
+  .dropzone {
+    margin-top: 32px;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 48px 24px;
+    text-align: center;
+    background: var(--panel);
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+    position: relative;
+  }
+  .dropzone.drag {
+    border-color: var(--accent);
+    background: #1a1410;
+  }
+  .dropzone.has-file {
+    border-style: solid;
+    border-color: var(--java-green);
+    padding: 24px;
+    text-align: left;
+    cursor: default;
+  }
+  .dz-icon {
+    font-family: var(--mono);
+    font-size: 28px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .dz-title { font-size: 15px; margin-bottom: 6px; }
+  .dz-sub { font-size: 13px; color: var(--text-dim); font-family: var(--mono); }
+  input[type=file] { display: none; }
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .file-info-left { display: flex; align-items: center; gap: 14px; }
+  .file-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: #10301f;
+    color: var(--java-green);
+    padding: 4px 8px;
+    border-radius: 3px;
+    border: 1px solid #1e5138;
+  }
+  .file-name { font-size: 14px; font-weight: 500; }
+  .file-meta { font-size: 12px; color: var(--text-dim); font-family: var(--mono); margin-top: 2px; }
+  .clear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .clear-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+  .options {
+    margin-top: 24px;
+    display: none;
+  }
+  .options.show { display: block; }
+  .opt-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .opt-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+  .opt-input input, .opt-input select {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .opt-input input:focus, .opt-input select:focus {
+    outline: none;
+    border-color: var(--accent-dim);
+  }
+
+  .preview {
+    margin-top: 28px;
+    display: none;
+  }
+  .preview.show { display: block; }
+  .preview-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .req-list {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .req-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .req-item:last-child { border-bottom: none; }
+  .method-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    width: 48px;
+    text-align: center;
+  }
+  .m-GET { background: #103a2e; color: #4fd1a5; }
+  .m-POST { background: #1a3010; color: #8fd14f; }
+  .m-PUT { background: #10263a; color: #4fa5d1; }
+  .m-PATCH { background: #2f2610; color: #d1b04f; }
+  .m-DELETE { background: #3a1010; color: #d14f4f; }
+  .req-name { color: var(--text); }
+  .req-path { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+
+  .generate-bar {
+    margin-top: 28px;
+    display: none;
+    align-items: center;
+    gap: 16px;
+  }
+  .generate-bar.show { display: flex; }
+  .btn-generate {
+    background: var(--accent);
+    color: #1a0f08;
+    border: none;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 13px 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-generate:hover { background: #ff7d4d; }
+  .btn-generate:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
+  .gen-status {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .gen-status.err { color: #e06060; }
+  .gen-status.ok { color: var(--java-green); }
+
+  .log {
+    margin-top: 20px;
+    background: #08090c;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #7d8fa6;
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+  .log.show { display: block; }
+  .log .ok-line { color: var(--java-green); }
+  .log .warn-line { color: #d1b04f; }
+
+  .result {
+    margin-top: 24px;
+    display: none;
+    background: linear-gradient(135deg, #10301f, #0f151e);
+    border: 1px solid #1e5138;
+    border-radius: 8px;
+    padding: 22px 24px;
+  }
+  .result.show { display: block; }
+  .result-title { font-size: 15px; font-weight: 600; color: var(--java-green); margin-bottom: 4px; }
+  .result-sub { font-size: 12.5px; color: var(--text-dim); font-family: var(--mono); margin-bottom: 16px; }
+  .btn-download {
+    background: var(--java-green);
+    color: #06180f;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--sans);
+  }
+  .btn-download:hover { background: #5cb47f; }
+  .tree {
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--panel-2);
+    border-radius: 6px;
+    padding: 14px 16px;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.6;
+    border: 1px solid var(--border);
+  }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="brand-mark">POSTMAN→RA</span>
+      <h1>Framework Generator</h1>
+    </div>
+    <span class="stack-tag"><b>REST Assured</b> · TestNG · Maven</span>
+  </header>
+  <div class="subtitle">Upload a Postman Collection v2.x export → get a complete, ready-to-run Java test automation project.</div>
+
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" accept=".json">
+    <div id="dzEmpty">
+      <div class="dz-icon">{ }</div>
+      <div class="dz-title">Drop your Postman collection.json here</div>
+      <div class="dz-sub">or click to browse — Collection v2.0/v2.1 export</div>
+    </div>
+    <div id="dzFile" class="file-info" style="display:none;">
+      <div class="file-info-left">
+        <span class="file-badge">JSON</span>
+        <div>
+          <div class="file-name" id="fileName"></div>
+          <div class="file-meta" id="fileMeta"></div>
+        </div>
+      </div>
+      <button class="clear-btn" id="clearBtn" type="button">CLEAR</button>
+    </div>
+  </div>
+
+  <div class="options" id="options">
+    <div class="opt-row">
+      <div class="opt-label">groupId</div>
+      <div class="opt-input"><input type="text" id="groupId" value="com.birlasoft.automation"></div>
+    </div>
+    <div class="opt-row">
+      <div class="opt-label">artifactId</div>
+      <div class="opt-input"><input type="text" id="artifactId" value="api-test-framework"></div>
+    </div>
+    <div class="opt-row">
+      <div class="opt-label">base package</div>
+      <div class="opt-input"><input type="text" id="basePackage" value="com.birlasoft.automation"></div>
+    </div>
+    <div class="opt-row">
+      <div class="opt-label">base URL override</div>
+      <div class="opt-input"><input type="text" id="baseUrlOverride" placeholder="leave blank to auto-detect from collection / {{baseUrl}} variable"></div>
+    </div>
+  </div>
+
+  <div class="preview" id="preview">
+    <div class="preview-title">Detected requests</div>
+    <div class="req-list" id="reqList"></div>
+  </div>
+
+  <div class="generate-bar" id="generateBar">
+    <button class="btn-generate" id="genBtn">Generate Framework</button>
+    <span class="gen-status" id="genStatus"></span>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <div class="result" id="result">
+    <div class="result-title">✓ Framework generated</div>
+    <div class="result-sub" id="resultSub"></div>
+    <button class="btn-download" id="downloadBtn">Download project.zip</button>
+    <div class="tree" id="tree"></div>
+  </div>
+
+  <footer>
+    Runs entirely in your browser — the collection file is never uploaded anywhere. Generates: Maven project, TestNG suite, RequestSpec config, POJOs (best-effort from sample JSON bodies), and one test class per request/folder.
+  </footer>
+</div>
+
+<script>
+// ---------- State ----------
+let collectionData = null;
+let parsedRequests = [];
+let collectionVars = {};
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const dzEmpty = document.getElementById('dzEmpty');
+const dzFile = document.getElementById('dzFile');
+const fileName = document.getElementById('fileName');
+const fileMeta = document.getElementById('fileMeta');
+const clearBtn = document.getElementById('clearBtn');
+const optionsEl = document.getElementById('options');
+const previewEl = document.getElementById('preview');
+const reqListEl = document.getElementById('reqList');
+const generateBar = document.getElementById('generateBar');
+const genBtn = document.getElementById('genBtn');
+const genStatus = document.getElementById('genStatus');
+const logEl = document.getElementById('log');
+const resultEl = document.getElementById('result');
+const resultSub = document.getElementById('resultSub');
+const treeEl = document.getElementById('tree');
+const downloadBtn = document.getElementById('downloadBtn');
+
+dropzone.addEventListener('click', () => { if (!collectionData) fileInput.click(); });
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+clearBtn.addEventListener('click', e => { e.stopPropagation(); resetAll(); });
+
+function resetAll() {
+  collectionData = null;
+  parsedRequests = [];
+  collectionVars = {};
+  fileInput.value = '';
+  dzEmpty.style.display = 'block';
+  dzFile.style.display = 'none';
+  dropzone.classList.remove('has-file');
+  optionsEl.classList.remove('show');
+  previewEl.classList.remove('show');
+  generateBar.classList.remove('show');
+  resultEl.classList.remove('show');
+  logEl.classList.remove('show');
+  logEl.innerHTML = '';
+  genStatus.textContent = '';
+}
+
+function handleFile(file) {
+  if (!file.name.endsWith('.json')) {
+    alert('Please upload a .json Postman collection export.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const json = JSON.parse(evt.target.result);
+      if (!json.item) throw new Error('This does not look like a Postman Collection (missing "item" array). Export as Collection v2.1 from Postman.');
+      collectionData = json;
+      fileName.textContent = file.name;
+      fileMeta.textContent = `${(file.size/1024).toFixed(1)} KB · ${json.info && json.info.name ? json.info.name : 'Untitled collection'}`;
+      dzEmpty.style.display = 'none';
+      dzFile.style.display = 'flex';
+      dropzone.classList.add('has-file');
+      optionsEl.classList.add('show');
+
+      // guess artifact id from collection name
+      if (json.info && json.info.name) {
+        const slug = json.info.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        if (slug) document.getElementById('artifactId').value = slug + '-tests';
+      }
+
+      parseCollection(json);
+    } catch (err) {
+      alert('Could not parse file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ---------- Postman Parsing ----------
+function extractVars(varArray, target) {
+  if (!Array.isArray(varArray)) return;
+  varArray.forEach(v => { if (v.key) target[v.key] = v.value || ''; });
+}
+
+function resolveVars(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/\{\{(.*?)\}\}/g, (m, key) => {
+    return collectionVars[key] !== undefined ? '${' + toConstName(key) + '}' : m;
+  });
+}
+
+function toConstName(key) {
+  return key.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+}
+
+function walkItems(items, folderPath, out) {
+  items.forEach(item => {
+    if (item.item) {
+      // it's a folder
+      walkItems(item.item, folderPath.concat([item.name]), out);
+    } else if (item.request) {
+      out.push(parseRequestItem(item, folderPath));
+    }
+  });
+}
+
+function parseRequestItem(item, folderPath) {
+  const req = item.request;
+  const method = (req.method || 'GET').toUpperCase();
+  let urlRaw = '';
+  let pathOnly = '';
+  let queryParams = [];
+  let pathVariables = [];
+
+  if (typeof req.url === 'string') {
+    urlRaw = req.url;
+  } else if (req.url) {
+    urlRaw = req.url.raw || '';
+    if (Array.isArray(req.url.query)) {
+      queryParams = req.url.query.filter(q => !q.disabled).map(q => ({ key: q.key, value: q.value || '' }));
+    }
+    if (Array.isArray(req.url.variable)) {
+      pathVariables = req.url.variable.map(v => ({ key: v.key, value: v.value || '' }));
+    }
+  }
+
+  // strip protocol+host to get path, keep as raw with {{vars}}
+  let displayPath = urlRaw.replace(/\{\{.*?\}\}/, '').split('?')[0];
+  if (!displayPath.startsWith('/')) displayPath = '/' + displayPath.replace(/^https?:\/\/[^/]+/, '');
+
+  let headers = [];
+  if (Array.isArray(req.header)) {
+    headers = req.header.filter(h => !h.disabled).map(h => ({ key: h.key, value: h.value || '' }));
+  }
+
+  let auth = req.auth || null;
+
+  let bodyMode = null;
+  let bodyRaw = null;
+  let bodyLanguage = null;
+  if (req.body) {
+    bodyMode = req.body.mode;
+    if (bodyMode === 'raw') {
+      bodyRaw = req.body.raw || '';
+      bodyLanguage = req.body.options && req.body.options.raw ? req.body.options.raw.language : 'json';
+    } else if (bodyMode === 'urlencoded' && Array.isArray(req.body.urlencoded)) {
+      bodyRaw = req.body.urlencoded.filter(p=>!p.disabled).map(p => `${p.key}=${p.value}`).join('&');
+    }
+  }
+
+  // test scripts
+  let testScript = '';
+  if (Array.isArray(item.event)) {
+    const testEvent = item.event.find(e => e.listen === 'test');
+    if (testEvent && testEvent.script && testEvent.script.exec) {
+      testScript = testEvent.script.exec.join('\n');
+    }
+  }
+
+  const assertions = extractAssertionsFromScript(testScript);
+
+  return {
+    name: item.name || 'UnnamedRequest',
+    folderPath,
+    method,
+    urlRaw,
+    displayPath,
+    queryParams,
+    pathVariables,
+    headers,
+    auth,
+    bodyMode,
+    bodyRaw,
+    bodyLanguage,
+    assertions,
+    testScript
+  };
+}
+
+function extractAssertionsFromScript(script) {
+  const assertions = [];
+  if (!script) return assertions;
+  // status code checks
+  const statusMatches = [...script.matchAll(/pm\.response\.to\.have\.status\((\d+)\)/g)];
+  statusMatches.forEach(m => assertions.push({ type: 'status', value: parseInt(m[1], 10) }));
+
+  const statusCodeVar = [...script.matchAll(/pm\.response\.code\s*(===|==)\s*(\d+)/g)];
+  statusCodeVar.forEach(m => assertions.push({ type: 'status', value: parseInt(m[2], 10) }));
+
+  // field existence: pm.expect(jsonData.xxx).to.exist
+  const existMatches = [...script.matchAll(/pm\.expect\(jsonData\.([a-zA-Z0-9_.\[\]]+)\)\.to\.exist/g)];
+  existMatches.forEach(m => assertions.push({ type: 'exist', field: m[1] }));
+
+  // equality: pm.expect(jsonData.xxx).to.eql("yyy") or .equal
+  const eqlMatches = [...script.matchAll(/pm\.expect\(jsonData\.([a-zA-Z0-9_.\[\]]+)\)\.to\.(?:eql|equal)\(([^)]+)\)/g)];
+  eqlMatches.forEach(m => assertions.push({ type: 'equals', field: m[1], value: m[2].trim().replace(/^["']|["']$/g, '') }));
+
+  return assertions;
+}
+
+function parseCollection(json) {
+  collectionVars = {};
+  if (Array.isArray(json.variable)) extractVars(json.variable, collectionVars);
+
+  parsedRequests = [];
+  walkItems(json.item, [], parsedRequests);
+
+  // render preview
+  reqListEl.innerHTML = '';
+  parsedRequests.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'req-item';
+    row.innerHTML = `<span class="method-tag m-${r.method}">${r.method}</span><span class="req-name">${escapeHtml(r.name)}</span><span class="req-path">${escapeHtml(r.displayPath || r.urlRaw)}</span>`;
+    reqListEl.appendChild(row);
+  });
+
+  previewEl.classList.add('show');
+  generateBar.classList.add('show');
+  genStatus.textContent = `${parsedRequests.length} request(s) detected`;
+  genStatus.className = 'gen-status';
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- Java Code Generation ----------
+function pascalCase(str) {
+  return (str || 'Unnamed')
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('') || 'Unnamed';
+}
+
+function camelCase(str) {
+  const p = pascalCase(str);
+  return p.charAt(0).toLowerCase() + p.slice(1);
+}
+
+function javaFieldType(value) {
+  if (value === null) return 'String';
+  if (typeof value === 'number') return Number.isInteger(value) ? 'Integer' : 'Double';
+  if (typeof value === 'boolean') return 'Boolean';
+  if (Array.isArray(value)) return 'List<Object>';
+  if (typeof value === 'object') return 'Object';
+  return 'String';
+}
+
+function generatePojoFromJson(className, jsonStr) {
+  let obj;
+  try { obj = JSON.parse(jsonStr); } catch (e) { return null; }
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return null;
+
+  const fields = Object.keys(obj).map(k => ({
+    name: k,
+    javaName: camelCase(k),
+    type: javaFieldType(obj[k])
+  }));
+
+  if (!fields.length) return null;
+
+  let needsListImport = fields.some(f => f.type.startsWith('List'));
+
+  let src = `package {{PACKAGE}}.models;\n\nimport com.fasterxml.jackson.annotation.JsonInclude;\nimport com.fasterxml.jackson.annotation.JsonProperty;\n${needsListImport ? 'import java.util.List;\n' : ''}\n@JsonInclude(JsonInclude.Include.NON_NULL)\npublic class ${className} {\n\n`;
+
+  fields.forEach(f => {
+    src += `    @JsonProperty("${f.name}")\n    private ${f.type} ${f.javaName};\n\n`;
+  });
+
+  src += `    public ${className}() {}\n\n`;
+
+  fields.forEach(f => {
+    const capitalized = f.javaName.charAt(0).toUpperCase() + f.javaName.slice(1);
+    src += `    public ${f.type} get${capitalized}() { return ${f.javaName}; }\n`;
+    src += `    public void set${capitalized}(${f.type} ${f.javaName}) { this.${f.javaName} = ${f.javaName}; }\n\n`;
+  });
+
+  src += `}\n`;
+  return src;
+}
+
+function buildTestClassName(req, index) {
+  let base = pascalCase(req.name);
+  if (!/Test$/.test(base)) base += 'Test';
+  return base;
+}
+
+function javaStringEscape(s) {
+  return (s || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+}
+
+function buildPathWithVars(req) {
+  // returns path string using {{var}} -> resolved to config where possible, keep others as literal placeholders
+  let path = req.displayPath || '';
+  req.pathVariables.forEach(pv => {
+    path = path.split(':' + pv.key).join('{' + pv.key + '}');
+  });
+  return path;
+}
+
+function generateTestClass(req, index, opts) {
+  const className = buildTestClassName(req, index);
+  const pkg = opts.basePackage;
+  const hasBody = !!(req.bodyRaw && (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH'));
+  let pojoClassName = null;
+  let pojoSrc = null;
+
+  if (hasBody && req.bodyLanguage === 'json') {
+    pojoClassName = className.replace(/Test$/, '') + 'Payload';
+    pojoSrc = generatePojoFromJson(pojoClassName, req.bodyRaw);
+    if (pojoSrc) pojoSrc = pojoSrc.replace('{{PACKAGE}}', pkg);
+  }
+
+  const path = buildPathWithVars(req);
+  const methodLower = req.method.toLowerCase();
+
+  let imports = [
+    `import ${pkg}.base.BaseTest;`,
+    `import io.restassured.response.Response;`,
+    `import org.testng.annotations.Test;`,
+    ``,
+    `import static io.restassured.RestAssured.given;`,
+    `import static org.hamcrest.Matchers.*;`
+  ];
+  if (pojoClassName && pojoSrc) {
+    imports.splice(1, 0, `import ${pkg}.models.${pojoClassName};`);
+  }
+
+  let body = `package ${pkg}.tests;\n\n${imports.join('\n')}\n\npublic class ${className} extends BaseTest {\n\n`;
+
+  const methodName = 'test' + pascalCase(req.name).replace(/Test$/, '');
+
+  body += `    @Test\n    public void ${methodName}() {\n\n`;
+
+  // path variable declarations
+  req.pathVariables.forEach(pv => {
+    body += `        String ${camelCase(pv.key)} = "${javaStringEscape(pv.value || 'REPLACE_ME')}"; // path variable\n`;
+  });
+  if (req.pathVariables.length) body += `\n`;
+
+  if (hasBody) {
+    if (pojoClassName && pojoSrc) {
+      body += `        ${pojoClassName} payload = new ${pojoClassName}();\n`;
+      let obj;
+      try { obj = JSON.parse(req.bodyRaw); } catch(e) { obj = {}; }
+      Object.keys(obj).forEach(k => {
+        const setter = 'set' + (camelCase(k).charAt(0).toUpperCase() + camelCase(k).slice(1));
+        const val = obj[k];
+        let literal;
+        if (typeof val === 'string') literal = `"${javaStringEscape(val)}"`;
+        else if (typeof val === 'boolean' || typeof val === 'number') literal = `${val}`;
+        else literal = 'null /* TODO: nested object/array */';
+        body += `        payload.${setter}(${literal});\n`;
+      });
+      body += `\n`;
+    } else {
+      body += `        String requestBody = "${javaStringEscape(req.bodyRaw)}";\n\n`;
+    }
+  }
+
+  body += `        Response response = given()\n                .spec(requestSpec)\n`;
+
+  if (hasBody) {
+    body += pojoClassName ? `                .body(payload)\n` : `                .body(requestBody)\n`;
+  }
+
+  req.pathVariables.forEach(pv => {
+    body += `                .pathParam("${pv.key}", ${camelCase(pv.key)})\n`;
+  });
+
+  req.queryParams.forEach(qp => {
+    const resolved = qp.value && qp.value.match(/^\{\{.*\}\}$/) ? `"${javaStringEscape(qp.value)}" /* TODO: resolve variable */` : `"${javaStringEscape(qp.value)}"`;
+    body += `                .queryParam("${qp.key}", ${resolved})\n`;
+  });
+
+  body += `        .when()\n                .${methodLower}("${path}")\n        .then()\n`;
+
+  // assertions
+  const statusAssertion = req.assertions.find(a => a.type === 'status');
+  const statusCode = statusAssertion ? statusAssertion.value : defaultStatusFor(req.method);
+  body += `                .statusCode(${statusCode})`;
+
+  const otherAssertions = req.assertions.filter(a => a.type !== 'status');
+  otherAssertions.forEach(a => {
+    if (a.type === 'exist') {
+      body += `\n                .body("${a.field}", notNullValue())`;
+    } else if (a.type === 'equals') {
+      const isNumeric = /^-?\d+(\.\d+)?$/.test(a.value);
+      const literal = isNumeric ? a.value : `"${javaStringEscape(a.value)}"`;
+      body += `\n                .body("${a.field}", equalTo(${literal}))`;
+    }
+  });
+
+  body += `\n                .extract()\n                .response();\n\n`;
+  body += `        // TODO: add further assertions / chain response data as needed\n`;
+  body += `        System.out.println(response.asPrettyString());\n`;
+  body += `    }\n}\n`;
+
+  return { className, source: body, pojoClassName, pojoSrc };
+}
+
+function defaultStatusFor(method) {
+  switch (method) {
+    case 'POST': return 201;
+    case 'DELETE': return 204;
+    default: return 200;
+  }
+}
+
+function generateBaseTest(pkg, allHeaders, authHint) {
+  let hasBearer = authHint === 'bearer';
+  return `package ${pkg}.base;
+
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.specification.RequestSpecification;
+import org.testng.annotations.BeforeClass;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+public class BaseTest {
+
+    protected RequestSpecification requestSpec;
+    protected static Properties config = new Properties();
+
+    @BeforeClass
+    public void setup() throws IOException {
+        try (InputStream is = BaseTest.class.getClassLoader().getResourceAsStream("config.properties")) {
+            config.load(is);
+        }
+
+        RestAssured.baseURI = config.getProperty("base.url");
+
+        RequestSpecBuilder builder = new RequestSpecBuilder()
+                .setContentType("application/json");
+${hasBearer ? '\n        String token = config.getProperty("auth.token");\n        if (token != null && !token.isEmpty()) {\n            builder.addHeader("Authorization", "Bearer " + token);\n        }\n' : ''}
+        requestSpec = builder.build();
+    }
+}
+`;
+}
+
+function generateConfigProperties(baseUrl, authHint) {
+  let out = `base.url=${baseUrl || 'https://api.example.com'}\n`;
+  if (authHint === 'bearer') out += `auth.token=REPLACE_WITH_TOKEN\n`;
+  return out;
+}
+
+function generateTestNgXml(pkg, testClasses) {
+  let classesXml = testClasses.map(c => `        <class name="${pkg}.tests.${c.className}"/>`).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="API Test Suite" verbose="1">
+    <test name="API Tests">
+        <classes>
+${classesXml}
+        </classes>
+    </test>
+</suite>
+`;
+}
+
+function generatePomXml(groupId, artifactId) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>${groupId}</groupId>
+    <artifactId>${artifactId}</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <restassured.version>5.4.0</restassured.version>
+        <testng.version>7.10.1</testng.version>
+        <jackson.version>2.17.0</jackson.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>\${restassured.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>\${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>\${jackson.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+`;
+}
+
+function generateReadme(artifactId, testClasses, requestCount) {
+  return `# ${artifactId}
+
+Auto-generated REST Assured (TestNG + Maven) framework, converted from a Postman Collection.
+
+## Structure
+- \`src/main/java/.../base/BaseTest.java\` — shared RequestSpecification setup, loads \`config.properties\`
+- \`src/main/resources/config.properties\` — base URL and auth token (fill in real values)
+- \`src/test/java/.../models/\` — POJOs generated (best-effort) from JSON request bodies found in the collection
+- \`src/test/java/.../tests/\` — one test class per Postman request (${requestCount} generated)
+- \`testng.xml\` — TestNG suite wiring all generated test classes
+
+## Before running
+1. Open \`src/main/resources/config.properties\` and set \`base.url\` (and \`auth.token\` if present).
+2. Review each generated test class — path/query variables pulled from \`{{...}}\` placeholders are marked \`REPLACE_ME\` or \`TODO\` where they couldn't be auto-resolved.
+3. Nested JSON objects/arrays in request bodies are marked \`TODO: nested object/array\` in the POJO setter calls — fill these in manually, or extend the generated POJO with nested classes.
+4. Run: \`mvn clean test\`
+
+## Notes
+This is a starting scaffold, not a finished suite — Postman \`pm.test\` scripts were mapped to REST Assured \`.statusCode()\` / \`.body()\` assertions where patterns were recognized (status code checks, field existence, field equality). Anything more custom in your original Postman tests should be ported over manually.
+`;
+}
+
+// ---------- Wire generate button ----------
+genBtn.addEventListener('click', async () => {
+  if (!parsedRequests.length) return;
+  genBtn.disabled = true;
+  logEl.classList.add('show');
+  logEl.innerHTML = '';
+  resultEl.classList.remove('show');
+
+  const log = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  try {
+    const groupId = document.getElementById('groupId').value.trim() || 'com.example';
+    const artifactId = document.getElementById('artifactId').value.trim() || 'api-test-framework';
+    const basePackage = document.getElementById('basePackage').value.trim() || groupId;
+    const baseUrlOverride = document.getElementById('baseUrlOverride').value.trim();
+
+    log('Parsing collection variables...');
+    let baseUrl = baseUrlOverride;
+    if (!baseUrl) {
+      baseUrl = collectionVars.baseUrl || collectionVars.base_url || collectionVars.host || '';
+      if (baseUrl) log(`Detected base URL variable: ${baseUrl}`, 'ok-line');
+      else log('No {{baseUrl}} variable found — using placeholder, please edit config.properties', 'warn-line');
+    }
+
+    // detect auth
+    let authHint = null;
+    const firstAuthReq = parsedRequests.find(r => r.auth && r.auth.type === 'bearer');
+    if (firstAuthReq) authHint = 'bearer';
+    else {
+      const bearerHeader = parsedRequests.some(r => r.headers.some(h => /authorization/i.test(h.key) && /bearer/i.test(h.value)));
+      if (bearerHeader) authHint = 'bearer';
+    }
+    log(authHint ? 'Detected Bearer token auth pattern' : 'No consistent auth pattern detected', authHint ? 'ok-line' : 'warn-line');
+
+    const pkgPath = basePackage.replace(/\./g, '/');
+    const zip = new JSZip();
+    const root = zip; // artifactId folder implicit via file paths
+
+    log('Generating pom.xml...');
+    root.file(`${artifactId}/pom.xml`, generatePomXml(groupId, artifactId));
+
+    log('Generating BaseTest.java...');
+    root.file(`${artifactId}/src/main/java/${pkgPath}/base/BaseTest.java`, generateBaseTest(basePackage, [], authHint));
+
+    log('Generating config.properties...');
+    root.file(`${artifactId}/src/main/resources/config.properties`, generateConfigProperties(baseUrl, authHint));
+
+    const testClasses = [];
+    const treeLines = [];
+
+    parsedRequests.forEach((req, idx) => {
+      log(`Converting: [${req.method}] ${req.name}`);
+      const gen = generateTestClass(req, idx, { basePackage });
+      testClasses.push(gen);
+      root.file(`${artifactId}/src/test/java/${pkgPath}/tests/${gen.className}.java`, gen.source);
+      if (gen.pojoClassName && gen.pojoSrc) {
+        root.file(`${artifactId}/src/test/java/${pkgPath}/models/${gen.pojoClassName}.java`, gen.pojoSrc);
+      }
+    });
+
+    log('Generating testng.xml...');
+    root.file(`${artifactId}/testng.xml`, generateTestNgXml(basePackage, testClasses));
+
+    log('Generating README.md...');
+    root.file(`${artifactId}/README.md`, generateReadme(artifactId, testClasses, parsedRequests.length));
+
+    log(`Done. ${testClasses.length} test classes, ${testClasses.filter(t=>t.pojoSrc).length} POJOs generated.`, 'ok-line');
+
+    genStatus.textContent = 'Generated successfully';
+    genStatus.className = 'gen-status ok';
+
+    // build tree preview
+    treeLines.push(`${artifactId}/`);
+    treeLines.push(`├── pom.xml`);
+    treeLines.push(`├── testng.xml`);
+    treeLines.push(`├── README.md`);
+    treeLines.push(`├── src/main/java/${pkgPath}/base/BaseTest.java`);
+    treeLines.push(`├── src/main/resources/config.properties`);
+    treeLines.push(`├── src/test/java/${pkgPath}/models/`);
+    testClasses.filter(t=>t.pojoSrc).forEach((t,i,arr) => treeLines.push(`│   ${i===arr.length-1?'└──':'├──'} ${t.pojoClassName}.java`));
+    treeLines.push(`└── src/test/java/${pkgPath}/tests/`);
+    testClasses.forEach((t,i,arr) => treeLines.push(`    ${i===arr.length-1?'└──':'├──'} ${t.className}.java`));
+    treeEl.textContent = treeLines.join('\n');
+
+    resultSub.textContent = `${artifactId}.zip — ${testClasses.length} tests, Maven + TestNG project, ready to import into IntelliJ/Eclipse`;
+    resultEl.classList.add('show');
+
+    downloadBtn.onclick = async () => {
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${artifactId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+
+  } catch (err) {
+    log('ERROR: ' + err.message, 'warn-line');
+    genStatus.textContent = 'Generation failed — see log';
+    genStatus.className = 'gen-status err';
+    console.error(err);
+  } finally {
+    genBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
